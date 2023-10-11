@@ -1,13 +1,13 @@
-#  Система обработки заказов ресторана
-> <p>Выполнил: Ефимов Иван БПИ212</p> <p>Система реализованая на Node.js с использованием пакетов express, nodemon, sqlite, jsonwebtoken, bcrypt. </p>
+<p>Completed by: Ivan Efimov, BPИ212</p>
+<p>This system is implemented using Node.js and utilizes packages such as express, nodemon, sqlite, jsonwebtoken, and bcrypt.</p>
 
-> <a href = "https://www.postman.com/material-physicist-87201864/workspace/hungry-kitties-dapp/collection/26062559-b69865d5-3468-4880-9155-2aafebf5eda9?action=share&creator=26062559">ссылка на коллекцию в postman </a> Важно, что во многих функциях в разделе аутентификации уже вставлен токен, который использовался мной при тестировании. Следует обновить его на свой токен.
+> <a href="https://www.postman.com/material-physicist-87201864/workspace/hungry-kitties-dapp/collection/26062559-b69865d5-3468-4880-9155-2aafebf5eda9?action=share&creator=26062559">Link to Postman collection</a> Please note that in many authentication functions, a token that I used during testing is already inserted. Be sure to update it with your own token.
 
-## Авторизация пользователя
+## User Authentication
 
-> Сервер, отвечающий за авторизацию пользователей находится в папке user_server.js. При локальном хостинге располагается на 3000 порту.
+> The server responsible for user authentication is located in the user_server.js file. It runs on port 3000 for local hosting.
 
-### Регистрация нового пользователя
+### Registering a New User
 
 ``` js 
 app.post('/register', (req, res) => {
@@ -30,10 +30,9 @@ app.post('/register', (req, res) => {
   });
 });
 ```
-
-### Авторизация пользователя
-
-```js
+### User Login
+``` js
+Copy code
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   console.log(salt)
@@ -42,24 +41,23 @@ app.post('/login', (req, res) => {
     SELECT * FROM user WHERE email = ? AND password_hash = ?
   `;
   db.get(query, [email, hashPassword(password, salt)], (err, row) => {
-    if (err) {
+    if err) {
       console.error(err);
       res.status(500).json({ error: 'Failed to log in', code: 500 });
     } else if (!row) {
       res.status(401).json({ error: 'Invalid email or password', code: 401 });
     } else {
-      // Генерируем JWT токен и отправляем его вместе с успешным сообщением
+      // Generate a JWT token and send it along with a success message
       const token = jwt.sign({ email, role: row.role }, process.env.SECRET_KEY, {expiresIn : '24h'})
       res.status(200).json({ message: 'Logged in successfully', token });
     }
   });
 });
 ```
+Upon successful login, a new session token will be returned.
 
-При успешной авторизации вернется новый токен сессии.
-
-### Представление информации о пользователе (по токену)
-```js
+### Retrieving User Information (By Token)
+``` js
 app.get('/user', authenticateToken, (req, res) => {
   const { email } = req.user;
   const query = `
@@ -76,18 +74,16 @@ app.get('/user', authenticateToken, (req, res) => {
     }
   });
 });
-```
+``` 
+Additionally, there are additional queries implemented for convenient testing, such as deleting all users and retrieving a list of all users.
 
-Также дополнительно реализованы запросы для удобного тестирования - удаление всех пользователей и получение списка всех пользователей.
+<strong>JWT Secret Key: 'KPO-Homework'</strong>
 
-<strong>Кодовое слово к JWT - 'KPO-Homework'</strong>
+### Handling Dishes / Menu / Orders
+The server for these functions automatically runs on port 3001.
 
-## Обработка dishes / menu / order
-
-Сервер для автоматически размещается на хосте 3001.
-
-### Получение всего меню
-```js
+Retrieving the Entire Menu
+``` js
 exports.GetMenu = (req, res) => {
     const query = `
       SELECT id, name, description, price
@@ -105,11 +101,10 @@ exports.GetMenu = (req, res) => {
     });
 }
 ```
-
-### Добавление блюда в меню (доступно только 'manager')
-```js
+Adding a Dish to the Menu (Available only to 'managers')
+``` js
 exports.AddNewDish = (req, res) => {
-    // Проверка роли пользователя
+    // Checking user role
     if (req.user.role !== 'manager') {
         return res.sendStatus(403).json({ error: 'Forbidden', code: 403 });
     }
@@ -134,15 +129,14 @@ exports.AddNewDish = (req, res) => {
     }
     );
 }
-```
+``` 
+Similar requests are implemented for modifying/deleting dishes from the menu.
 
-Аналогично реализованы запросы на изменение/удаление блюда из меню.
-
-### Создание заказа
-```js
+### Creating an Order
+``` js
 exports.CreateOrder = (req, res) => {
     const { dishes, special_requests } = req.body;
-    // Проверка, что каждое блюдо из dishes доступно в меню
+    // Checking that each dish in dishes is available in the menu
     const query1 = `
         SELECT id
         FROM dish
@@ -160,8 +154,8 @@ exports.CreateOrder = (req, res) => {
             }
         });
     });
-    // Создание нового заказа
-    const status = 'в ожидании';
+    // Creating a new order
+    const status = 'pending';
     const query = `
         INSERT INTO orders (status, special_requests)
         VALUES (?, ?)
@@ -190,11 +184,11 @@ exports.CreateOrder = (req, res) => {
 }
 ```
 
-### Обновление статуса заказа
+### Updating Order Status
 ```js
-// Обновление статуса заказа
+// Updating order status
 exports.UpdateOrder = (req, res) => {
-    // Проверка на 'manager'
+    // Checking for 'manager' role
     if (req.user.role !== 'manager') {
         return res.status(403).json({ error: 'Forbidden', code: 403 });
     }
@@ -214,20 +208,3 @@ exports.UpdateOrder = (req, res) => {
     });
 }
 ```
-
-## Качество кода
-Так как этот пункт весит целых  😱😱😱😱 2 балла, то считаю необходимым расписать.
-
-Код разделил на три папки, помимо двух главных файлов с серверами.
-
-<ul>
-<li> controllers (описаны функции поведения при выполнении запроса)</li>
-<li> routes (описаны пути для определения запроса)</li>
-<li> utility_func (без лишних слов)</li> 
-</ul>
-
-Таким образом поддержка сервера будет намного быстрее и понятней.
-
-
-
-
