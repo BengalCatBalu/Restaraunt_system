@@ -1,4 +1,3 @@
-<p>Completed by: Ivan Efimov, BPИ212</p>
 <p>This system is implemented using Node.js and utilizes packages such as express, nodemon, sqlite, jsonwebtoken, and bcrypt.</p>
 
 > <a href="https://www.postman.com/material-physicist-87201864/workspace/hungry-kitties-dapp/collection/26062559-b69865d5-3468-4880-9155-2aafebf5eda9?action=share&creator=26062559">Link to Postman collection</a> Please note that in many authentication functions, a token that I used during testing is already inserted. Be sure to update it with your own token.
